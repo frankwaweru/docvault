@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocVault — Premium Document Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f5f0e8;
+    --cream: #faf7f2;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dark: #9b7a2a;
+    --accent: #2d5a3d;
+    --accent-light: #3d7a55;
+    --muted: #6b6560;
+    --border: rgba(201,168,76,0.25);
+    --shadow: 0 8px 40px rgba(10,10,15,0.12);
+    --shadow-deep: 0 20px 80px rgba(10,10,15,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 48px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(20px);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo span { color: var(--paper); }
+
+  .header-nav { display: flex; gap: 12px; align-items: center; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; border: none; text-decoration: none;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .btn-ghost {
+    background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,0.12);
+  }
+  .btn-ghost:hover { color: var(--paper); border-color: rgba(255,255,255,0.3); }
+  .btn-gold {
+    background: var(--gold); color: var(--ink); font-weight: 600;
+  }
+  .btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(201,168,76,0.35); }
+  .btn-accent {
+    background: var(--accent); color: #fff;
+  }
+  .btn-accent:hover { background: var(--accent-light); transform: translateY(-1px); }
+  .btn-danger { background: #8b2020; color: #fff; }
+  .btn-danger:hover { background: #a02525; }
+  .btn-sm { padding: 7px 14px; font-size: 0.78rem; }
+
+  /* ── VIEWS ── */
+  .view { display: none; animation: fadeUp 0.4s ease; }
+  .view.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center; padding: 100px 48px 80px;
+    background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%);
+  }
+  .hero-label {
+    display: inline-block; margin-bottom: 20px;
+    padding: 6px 18px; border: 1px solid var(--border);
+    border-radius: 100px; font-size: 0.75rem; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 6vw, 5rem); line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .hero h1 em { color: var(--gold); font-style: italic; }
+  .hero p { color: var(--muted); font-size: 1.1rem; max-width: 520px; margin: 0 auto 36px; line-height: 1.7; }
+  .hero-stats {
+    display: flex; justify-content: center; gap: 48px; margin-top: 60px;
+    padding-top: 40px; border-top: 1px solid var(--border);
+  }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold); }
+  .stat-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+  /* ── STORE GRID ── */
+  .section { padding: 60px 48px; }
+  .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 36px; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; }
+  .section-count { color: var(--muted); font-size: 0.85rem; }
+
+  .doc-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;
+  }
+
+  .doc-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    transition: all 0.3s; cursor: pointer;
+    position: relative;
+  }
+  .doc-card:hover {
+    border-color: var(--gold); transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(201,168,76,0.12);
+    background: rgba(255,255,255,0.05);
+  }
+
+  .card-thumb {
+    height: 140px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(45,90,61,0.08) 100%);
+    position: relative; overflow: hidden;
+  }
+  .card-thumb::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(0deg, rgba(10,10,15,0.3) 0%, transparent 60%);
+  }
+  .file-icon { font-size: 3rem; z-index: 1; }
+
+  .doc-type-badge {
+    position: absolute; top: 12px; right: 12px;
+    padding: 3px 10px; border-radius: 100px;
+    font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    background: rgba(10,10,15,0.7); color: var(--gold); border: 1px solid var(--border);
+    backdrop-filter: blur(8px); z-index: 2;
+  }
+
+  .card-body { padding: 20px; }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; margin-bottom: 6px; line-height: 1.35; }
+  .card-desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 16px; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-price { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--gold); }
+  .card-price small { font-size: 0.7rem; color: var(--muted); font-family: 'DM Sans', sans-serif; margin-left: 2px; }
+
+  .purchased-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 100px;
+    background: rgba(45,90,61,0.2); color: #5dba7d;
+    font-size: 0.75rem; border: 1px solid rgba(45,90,61,0.4);
+  }
+
+  .empty-state {
+    text-align: center; padding: 80px 20px;
+    color: var(--muted);
+  }
+  .empty-state .empty-icon { font-size: 3.5rem; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state h3 { font-family: 'Playfair Display', serif; color: var(--paper); margin-bottom: 8px; }
+
+  /* ── ADMIN PANEL ── */
+  .admin-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 48px; max-width: 1400px; margin: 0 auto; }
+  @media(max-width: 900px) { .admin-layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px; padding: 32px;
+  }
+  .panel-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 8px; }
+  .panel-sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+
+  .form-group { margin-bottom: 18px; }
+  label { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  input, textarea, select {
+    width: 100%; padding: 12px 14px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; color: var(--paper);
+    font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+    transition: border-color 0.2s;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .price-input-wrap { position: relative; }
+  .price-input-wrap::before { content: 'KSh'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gold); font-size: 0.85rem; font-weight: 600; pointer-events: none; }
+  .price-input-wrap input { padding-left: 52px; }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed rgba(201,168,76,0.3); border-radius: 12px;
+    padding: 40px 20px; text-align: center; cursor: pointer;
+    transition: all 0.2s; position: relative; overflow: hidden;
+    background: rgba(201,168,76,0.02);
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--gold); background: rgba(201,168,76,0.06);
+  }
+  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { font-size: 2.2rem; margin-bottom: 12px; }
+  .upload-zone p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+  .upload-zone strong { color: var(--gold); }
+  .file-chosen { margin-top: 12px; padding: 8px 14px; background: rgba(45,90,61,0.2); border-radius: 8px; font-size: 0.8rem; color: #5dba7d; display: none; }
+
+  /* ── ADMIN DOC LIST ── */
+  .admin-doc-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px;
+    background: rgba(255,255,255,0.02); transition: all 0.2s;
+  }
+  .admin-doc-item:hover { border-color: rgba(201,168,76,0.4); }
+  .doc-item-icon { font-size: 1.8rem; flex-shrink: 0; }
+  .doc-item-info { flex: 1; min-width: 0; }
+  .doc-item-name { font-weight: 500; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-item-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .doc-item-price { color: var(--gold); font-weight: 600; font-size: 0.95rem; margin-right: 8px; white-space: nowrap; }
+
+  /* ── MODALS ── */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px); z-index: 500;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: #141418; border: 1px solid var(--border); border-radius: 20px;
+    padding: 40px; width: 100%; max-width: 480px;
+    transform: translateY(20px); transition: transform 0.3s;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 6px; }
+  .modal-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; }
+
+  /* Payment modal extras */
+  .order-summary {
+    background: rgba(201,168,76,0.06); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; margin-bottom: 24px;
+  }
+  .order-row { display: flex; justify-content: space-between; align-items: center; }
+  .order-row + .order-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .order-label { font-size: 0.82rem; color: var(--muted); }
+  .order-value { font-weight: 600; }
+  .order-total { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--gold); }
+
+  .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .pay-methods { display: flex; gap: 8px; margin-bottom: 20px; }
+  .pay-method {
+    flex: 1; padding: 10px; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;
+    font-size: 0.78rem; color: var(--muted);
+  }
+  .pay-method.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
+  .pay-method-icon { display: block; font-size: 1.2rem; margin-bottom: 4px; }
+
+  /* Success animation */
+  .success-check {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(45,90,61,0.2); border: 2px solid var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; margin: 0 auto 20px;
+    animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--paper); color: var(--ink);
+    padding: 12px 24px; border-radius: 100px;
+    font-size: 0.85rem; font-weight: 500;
+    transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+    z-index: 9000; white-space: nowrap;
+    box-shadow: var(--shadow-deep);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── DIVIDER ── */
+  hr.fancy {
+    border: none; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    header { padding: 16px 20px; }
+    .hero { padding: 60px 20px 50px; }
+    .section { padding: 40px 20px; }
+    .hero-stats { gap: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">📜 Doc<span>Vault</span></div>
+  <nav class="header-nav">
+    <button class="btn btn-ghost" onclick="switchView('store')">🛒 Browse</button>
+    <button class="btn btn-ghost" onclick="switchView('purchases')">📥 My Downloads</button>
+    <button class="btn btn-gold" onclick="switchView('admin')">⚙ Admin</button>
+  </nav>
+</header>
+
+<!-- ══════════ STORE VIEW ══════════ -->
+<div id="view-store" class="view active">
+  <div class="hero">
+    <span class="hero-label">✦ Premium Document Marketplace</span>
+    <h1>Acquire <em>Knowledge,</em><br>Download Instantly</h1>
+    <p>Browse our curated collection of premium documents. Purchase securely and receive immediate download access.</p>
+    <button class="btn btn-gold" style="font-size:1rem;padding:14px 32px;" onclick="scrollToStore()">Explore Documents →</button>
+    <div class="hero-stats">
+      <div><div class="stat-num" id="stat-docs">0</div><div class="stat-label">Documents</div></div>
+      <div><div class="stat-num" id="stat-sales">0</div><div class="stat-label">Sales</div></div>
+      <div><div class="stat-num">KSh</div><div class="stat-label">Currency</div></div>
+    </div>
+  </div>
+  <hr class="fancy">
+  <div class="section" id="store-section">
+    <div class="section-header">
+      <h2 class="section-title">Available Documents</h2>
+      <span class="section-count" id="doc-count"></span>
+    </div>
+    <div class="doc-grid" id="store-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════ PURCHASES VIEW ══════════ -->
+<div id="view-purchases" class="view">
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">My Purchased Documents</h2>
+    </div>
+    <div class="doc-grid" id="purchases-grid"></div>
+  </div>
+</div>
+
+<!-- ══════════ ADMIN VIEW ══════════ -->
+<div id="view-admin" class="view">
+  <div class="admin-layout">
+    <!-- Upload Form -->
+    <div class="panel">
+      <h2 class="panel-title">Upload Document</h2>
+      <p class="panel-sub">Add a new document to the marketplace with a price tag.</p>
+
+      <div class="form-group">
+        <label>Document Title *</label>
+        <input type="text" id="doc-title" placeholder="e.g. Complete Business Plan Template">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="doc-desc" placeholder="Brief description of what buyers will receive..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Price (KSh) *</label>
+        <div class="price-input-wrap">
+          <input type="number" id="doc-price" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Document File *</label>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="file-input" accept="*/*">
+          <div class="upload-icon">📁</div>
+          <p><strong>Click to browse</strong> or drag & drop any file<br>PDF, DOCX, XLSX, images, ZIP and more</p>
+          <div class="file-chosen" id="file-chosen"></div>
+        </div>
+      </div>
+      <button class="btn btn-gold" style="width:100%;padding:14px;font-size:0.9rem;" onclick="uploadDoc()">
+        ✦ Publish to Marketplace
+      </button>
+    </div>
+
+    <!-- Manage Docs -->
+    <div class="panel">
+      <h2 class="panel-title">Manage Documents</h2>
+      <p class="panel-sub">All published documents. Remove or update listings.</p>
+      <div id="admin-doc-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PURCHASE MODAL ══════════ -->
+<div class="overlay" id="purchase-overlay">
+  <div class="modal">
+    <div id="payment-step">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h2 class="modal-title">Complete Purchase</h2>
+        <button onclick="closeModal()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;">✕</button>
+      </div>
+      <p class="modal-sub">Secure checkout · Instant download after payment</p>
+
+      <div class="order-summary">
+        <div class="order-row">
+          <span class="order-label">Document</span>
+          <span class="order-value" id="modal-doc-name" style="max-width:200px;text-align:right;font-size:0.85rem;"></span>
+        </div>
+        <div class="order-row">
+          <span class="order-label">Amount</span>
+          <span class="order-total" id="modal-price"></span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label>Payment Method</label>
+        <div class="pay-methods">
+          <div class="pay-method active" onclick="selectMethod(this)"><span class="pay-method-icon">💳</span>Card</div>
+          <div class="pay-method" onclick="selectMethod(this)"><span class="pay-method-icon">📱</span>M-Pesa</div>
+          <div class="pay-method" onclick="selectMethod(this)"><span class="pay-method-icon">🏦</span>Bank</div>
+        </div>
+      </div>
+
+      <div id="card-fields">
+        <div class="form-group">
+          <label>Cardholder Name</label>
+          <input type="text" id="pay-name" placeholder="Full name on card">
+        </div>
+        <div class="form-group">
+          <label>Card Number</label>
+          <input type="text" id="pay-card" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)">
+        </div>
+        <div class="card-row">
+          <div class="form-group">
+            <label>Expiry</label>
+            <input type="text" id="pay-expiry" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)">
+          </div>
+          <div class="form-group">
+            <label>CVV</label>
+            <input type="text" id="pay-cvv" placeholder="123" maxlength="4">
+          </div>
+        </div>
+      </div>
+
+      <div id="mpesa-fields" style="display:none;">
+        <div class="form-group">
+          <label>M-Pesa Phone Number</label>
+          <input type="tel" id="pay-mpesa" placeholder="0712 345 678">
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:-10px;">You'll receive an STK push to confirm payment.</p>
+      </div>
+
+      <div id="bank-fields" style="display:none;">
+        <div class="form-group">
+          <label>Account Number</label>
+          <input type="text" id="pay-bank" placeholder="Enter account number">
+        </div>
+      </div>
+
+      <button class="btn btn-gold" style="width:100%;padding:14px;font-size:0.95rem;margin-top:8px;" onclick="processPayment()">
+        🔒 Pay & Download
+      </button>
+      <p style="text-align:center;font-size:0.72rem;color:var(--muted);margin-top:12px;">
+        🔐 256-bit SSL encrypted · Your data is never stored
+      </p>
+    </div>
+
+    <!-- Success Step -->
+    <div id="success-step" style="display:none;text-align:center;">
+      <div class="success-check">✓</div>
+      <h2 class="modal-title" style="margin-bottom:8px;">Payment Successful!</h2>
+      <p class="modal-sub" style="margin-bottom:28px;">Your document is ready. Click below to download.</p>
+      <button class="btn btn-accent" style="width:100%;padding:14px;font-size:0.95rem;" id="download-btn" onclick="triggerDownload()">
+        ⬇ Download Document
+      </button>
+      <button class="btn btn-ghost" style="width:100%;padding:12px;margin-top:10px;" onclick="closeModal()">
+        Continue Browsing
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── DATA LAYER ──
+function loadData() {
+  try { return JSON.parse(localStorage.getItem('docvault_docs') || '[]'); } catch { return []; }
+}
+function saveData(docs) {
+  localStorage.setItem('docvault_docs', JSON.stringify(docs));
+}
+function loadPurchases() {
+  try { return JSON.parse(localStorage.getItem('docvault_purchased') || '[]'); } catch { return []; }
+}
+function savePurchases(p) {
+  localStorage.setItem('docvault_purchased', JSON.stringify(p));
+}
+function loadSales() {
+  return parseInt(localStorage.getItem('docvault_sales') || '0');
+}
+function bumpSales() {
+  localStorage.setItem('docvault_sales', loadSales() + 1);
+}
+
+// ── STATE ──
+let currentDocId = null;
+let currentFile = null;
+let selectedMethod = 'card';
+
+// ── FILE ICONS ──
+function getFileIcon(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const map = {
+    pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊',
+    ppt: '📋', pptx: '📋', txt: '🗒', csv: '📊', zip: '🗜',
+    rar: '🗜', jpg: '🖼', jpeg: '🖼', png: '🖼', gif: '🖼',
+    mp4: '🎬', mp3: '🎵', wav: '🎵', json: '⚙', xml: '⚙',
+    html: '🌐', css: '🎨', js: '⚡', py: '🐍',
+  };
+  return map[ext] || '📁';
+}
+function getFileType(name) {
+  return (name.split('.').pop() || 'FILE').toUpperCase();
+}
+
+// ── VIEWS ──
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  if (v === 'store') renderStore();
+  if (v === 'admin') renderAdmin();
+  if (v === 'purchases') renderPurchases();
+}
+
+// ── STORE ──
+function renderStore() {
+  const docs = loadData();
+  const grid = document.getElementById('store-grid');
+  const purchased = loadPurchases();
+  document.getElementById('stat-docs').textContent = docs.length;
+  document.getElementById('stat-sales').textContent = loadSales();
+  document.getElementById('doc-count').textContent = docs.length + ' document' + (docs.length !== 1 ? 's' : '');
+
+  if (docs.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">📭</div>
+      <h3>No documents yet</h3>
+      <p style="margin-top:8px;font-size:0.85rem;">Switch to Admin to upload your first document.</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = docs.map(d => {
+    const isPurchased = purchased.includes(d.id);
+    return `<div class="doc-card" onclick="openPurchase('${d.id}')">
+      <div class="card-thumb">
+        <span class="file-icon">${getFileIcon(d.fileName)}</span>
+        <span class="doc-type-badge">${getFileType(d.fileName)}</span>
+      </div>
+      <div class="card-body">
+        <h3 class="card-title">${escHtml(d.title)}</h3>
+        <p class="card-desc">${escHtml(d.desc || 'Premium document — purchase to download.')}</p>
+        <div class="card-footer">
+          <div class="card-price">KSh ${formatNum(d.price)}<small>/ copy</small></div>
+          ${isPurchased
+            ? `<span class="purchased-badge">✓ Owned</span>`
+            : `<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openPurchase('${d.id}')">Buy Now</button>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PURCHASES ──
+function renderPurchases() {
+  const docs = loadData();
+  const purchased = loadPurchases();
+  const grid = document.getElementById('purchases-grid');
+  const owned = docs.filter(d => purchased.includes(d.id));
+
+  if (owned.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">📦</div>
+      <h3>No purchases yet</h3>
+      <p style="margin-top:8px;font-size:0.85rem;">Browse the store and purchase documents to see them here.</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = owned.map(d => `
+    <div class="doc-card">
+      <div class="card-thumb">
+        <span class="file-icon">${getFileIcon(d.fileName)}</span>
+        <span class="doc-type-badge">${getFileType(d.fileName)}</span>
+      </div>
+      <div class="card-body">
+        <h3 class="card-title">${escHtml(d.title)}</h3>
+        <p class="card-desc">${escHtml(d.desc || '')}</p>
+        <div class="card-footer">
+          <span class="purchased-badge">✓ Purchased</span>
+          <button class="btn btn-accent btn-sm" onclick="downloadDoc('${d.id}')">⬇ Download</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── ADMIN ──
+function renderAdmin() {
+  const docs = loadData();
+  const list = document.getElementById('admin-doc-list');
+  if (docs.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><h3>No documents</h3><p>Upload one on the left.</p></div>`;
+    return;
+  }
+  list.innerHTML = docs.map(d => `
+    <div class="admin-doc-item">
+      <div class="doc-item-icon">${getFileIcon(d.fileName)}</div>
+      <div class="doc-item-info">
+        <div class="doc-item-name">${escHtml(d.title)}</div>
+        <div class="doc-item-meta">${escHtml(d.fileName)} · ${escHtml(d.fileSize)}</div>
+      </div>
+      <span class="doc-item-price">KSh ${formatNum(d.price)}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}')">✕</button>
+    </div>`).join('');
+}
+
+// ── UPLOAD ──
+document.getElementById('file-input').addEventListener('change', function() {
+  if (this.files[0]) {
+    currentFile = this.files[0];
+    const el = document.getElementById('file-chosen');
+    el.textContent = '✓ ' + currentFile.name;
+    el.style.display = 'block';
+  }
+});
+
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) {
+    currentFile = e.dataTransfer.files[0];
+    document.getElementById('file-input').files = e.dataTransfer.files;
+    const el = document.getElementById('file-chosen');
+    el.textContent = '✓ ' + currentFile.name;
+    el.style.display = 'block';
+  }
+});
+
+function uploadDoc() {
+  const title = document.getElementById('doc-title').value.trim();
+  const desc  = document.getElementById('doc-desc').value.trim();
+  const price = parseFloat(document.getElementById('doc-price').value);
+
+  if (!title) return toast('Please enter a document title.');
+  if (!currentFile) return toast('Please select a file to upload.');
+  if (isNaN(price) || price < 0) return toast('Please enter a valid price.');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const docs = loadData();
+    const doc = {
+      id: 'doc_' + Date.now(),
+      title, desc,
+      price: price.toFixed(2),
+      fileName: currentFile.name,
+      fileSize: formatFileSize(currentFile.size),
+      fileType: currentFile.type,
+      fileData: e.target.result, // base64
+      uploadedAt: new Date().toISOString()
+    };
+    docs.push(doc);
+    saveData(docs);
+
+    // Reset form
+    document.getElementById('doc-title').value = '';
+    document.getElementById('doc-desc').value = '';
+    document.getElementById('doc-price').value = '';
+    document.getElementById('file-chosen').style.display = 'none';
+    document.getElementById('file-input').value = '';
+    currentFile = null;
+    renderAdmin();
+    toast('✓ Document published to marketplace!');
+  };
+  reader.readAsDataURL(currentFile);
+}
+
+function deleteDoc(id) {
+  if (!confirm('Remove this document from the marketplace?')) return;
+  const docs = loadData().filter(d => d.id !== id);
+  saveData(docs);
+  renderAdmin();
+  toast('Document removed.');
+}
+
+// ── PURCHASE MODAL ──
+function openPurchase(id) {
+  const docs = loadData();
+  const doc = docs.find(d => d.id === id);
+  if (!doc) return;
+
+  const purchased = loadPurchases();
+  if (purchased.includes(id)) {
+    // Already purchased — download directly
+    downloadDoc(id);
+    return;
+  }
+
+  currentDocId = id;
+  document.getElementById('modal-doc-name').textContent = doc.title;
+  document.getElementById('modal-price').textContent = 'KSh ' + formatNum(doc.price);
+
+  document.getElementById('payment-step').style.display = 'block';
+  document.getElementById('success-step').style.display = 'none';
+  document.getElementById('purchase-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('purchase-overlay').classList.remove('open');
+  currentDocId = null;
+}
+
+function selectMethod(el) {
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('active'));
+  el.classList.add('active');
+  const label = el.textContent.trim();
+  document.getElementById('card-fields').style.display = label === 'Card' ? 'block' : 'none';
+  document.getElementById('mpesa-fields').style.display = label === 'M-Pesa' ? 'block' : 'none';
+  document.getElementById('bank-fields').style.display = label === 'Bank' ? 'block' : 'none';
+  selectedMethod = label.toLowerCase();
+}
+
+function processPayment() {
+  // Basic validation
+  if (selectedMethod === 'card') {
+    const name = document.getElementById('pay-name').value.trim();
+    const card = document.getElementById('pay-card').value.trim();
+    const expiry = document.getElementById('pay-expiry').value.trim();
+    const cvv = document.getElementById('pay-cvv').value.trim();
+    if (!name || !card || !expiry || !cvv) return toast('Please fill in all card details.');
+    if (card.replace(/\s/g,'').length < 16) return toast('Invalid card number.');
+  } else if (selectedMethod === 'm-pesa') {
+    const phone = document.getElementById('pay-mpesa').value.trim();
+    if (!phone) return toast('Please enter your M-Pesa number.');
+  } else if (selectedMethod === 'bank') {
+    const acc = document.getElementById('pay-bank').value.trim();
+    if (!acc) return toast('Please enter your account number.');
+  }
+
+  // Simulate payment processing
+  const btn = document.querySelector('#payment-step .btn-gold');
+  btn.textContent = '⏳ Processing...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    // Mark as purchased
+    const purchased = loadPurchases();
+    if (!purchased.includes(currentDocId)) purchased.push(currentDocId);
+    savePurchases(purchased);
+    bumpSales();
+
+    // Show success
+    document.getElementById('payment-step').style.display = 'none';
+    document.getElementById('success-step').style.display = 'block';
+    btn.textContent = '🔒 Pay & Download';
+    btn.disabled = false;
+
+    // Update stats
+    document.getElementById('stat-sales').textContent = loadSales();
+  }, 1800);
+}
+
+function triggerDownload() {
+  downloadDoc(currentDocId);
+  closeModal();
+}
+
+function downloadDoc(id) {
+  const docs = loadData();
+  const doc = docs.find(d => d.id === id);
+  if (!doc) return toast('Document not found.');
+
+  const a = document.createElement('a');
+  a.href = doc.fileData;
+  a.download = doc.fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('⬇ Download started!');
+}
+
+// ── HELPERS ──
+function scrollToStore() {
+  document.getElementById('store-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function formatCard(input) {
+  let v = input.value.replace(/\D/g, '').substring(0, 16);
+  input.value = v.replace(/(.{4})/g, '$1 ').trim();
+}
+
+function formatExpiry(input) {
+  let v = input.value.replace(/\D/g, '').substring(0, 4);
+  if (v.length > 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+  input.value = v;
+}
+
+function formatNum(n) {
+  return parseFloat(n).toLocaleString('en-KE', { minimumFractionDigits: 2 });
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Close modal on backdrop click
+document.getElementById('purchase-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── INIT ──
+renderStore();
+</script>
+</body>
+</html>
